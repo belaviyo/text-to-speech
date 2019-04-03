@@ -16,19 +16,21 @@
     }
   }
 
-  window.addEventListener('beforeunload', () => speechSynthesis.cancel());
+  window.addEventListener('unload', () => speechSynthesis.cancel());
 
   const LAZY = Symbol();
   const CALC = Symbol();
   const BIULD = Symbol();
 
   class SimpleTTS extends Emitter {
-    constructor(options = {
+    constructor(doc = document, options = {
       separator: '\n!\n',
-      delay: 100,
+      delay: 1000,
       maxlength: 160
     }) {
       super();
+      this.doc = doc;
+
       this.SEPARATOR = options.separator; // this is used to combine multiple sections on local voice case
       this.DELAY = options.delay; // delay between sections
       this.MAXLENGTH = options.maxlength; // max possible length for each section
@@ -52,7 +54,9 @@
           if (this.sections.length > this.offset + 1 && this.dead === false) {
             this.offset += 1;
             this.instance.text = this.sections[this.offset].textContent;
-            this[LAZY](() => this.speak());
+            // delay only if there is a section
+            const timeout = this.sections[this.offset].target === this.sections[this.offset - 1].target ? 0 : this.DELAY;
+            this[LAZY](() => this.speak(), timeout);
           }
           else {
             this.emit('end');
@@ -74,6 +78,7 @@
     }
     [LAZY](callback, timeout = this.DELAY) {
       window.clearTimeout(this.timer);
+      console.log(timeout);
       this.timer = window.setTimeout(callback, timeout);
     }
     ready() {
@@ -167,13 +172,26 @@
         sections.unshift(e);
         nodes = nodes.filter(n => e.contains(n) === false);
       }
+      // if a section is already included, remove it;
+      const toBeRemoved = [];
+      sections.forEach((e, i) => {
+        for (const section of sections.slice(Math.max(0, i - 10), i)) {
+          if (section.contains(e)) {
+            toBeRemoved.push(e);
+          }
+        }
+      });
+      for (const e of toBeRemoved) {
+        const index = sections.indexOf(e);
+        sections.splice(index, 1);
+      }
       // split by dot
       for (const section of sections) {
         if (section.textContent.length < this.MAXLENGTH) {
           this.sections.push(section);
         }
         else {
-          const parts = section.textContent.split(/\./g).filter(a => a);
+          const parts = section.textContent.split(/[.,]/g).filter(a => a);
           const combined = [];
           let length = 0;
           let cache = [];
@@ -202,18 +220,31 @@
     }
   }
   class Styling extends Parser {
-    constructor() {
-      super();
+    constructor(doc, options) {
+      super(doc, options);
 
       const cleanup = () => {
-        const e = document.querySelector('.tts-speaking');
+        const e = this.doc.querySelector('.tts-speaking');
         if (e) {
           e.classList.remove('tts-speaking');
         }
       };
+      const isElementInViewport = el => {
+        const rect = el.getBoundingClientRect();
+        return rect.top >= 0 &&
+               rect.bottom <= (this.doc.defaultView.innerHeight || this.doc.documentElement.clientHeight);
+      };
       this.on('section', n => {
         cleanup();
-        (this.sections[n].target || this.sections[n]).classList.add('tts-speaking');
+        const e = this.sections[n].target || this.sections[n];
+
+        e.classList.add('tts-speaking');
+        if (isElementInViewport(e) === false) {
+          e.scrollIntoView({
+            block: 'center',
+            inline: 'nearest'
+          });
+        }
       });
       this.on('instance-start', () => this.emit('status', 'play'));
       this.on('instance-resume', () => this.emit('status', 'play'));
@@ -290,8 +321,8 @@
     }
   }
   class Options extends Navigate {
-    constructor() {
-      super();
+    constructor(doc, options) {
+      super(doc, options);
       this.options = {
         get pitch() {
           return Number(localStorage.getItem('tts-pitch') || '1');
