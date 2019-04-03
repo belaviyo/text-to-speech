@@ -372,7 +372,7 @@
             <col>
           </colgroup>
           <tbody>
-            <tr>
+            <tr title="A float that represents the volume value, between 0 (lowest) and 1 (highest.)">
               <td>Volume</td>
               <td>
                 <div>
@@ -380,15 +380,15 @@
                 </div>
               </td>
             </tr>
-            <tr>
-              <td>Rate</td>
+            <tr title="A float representing the rate value. It can range between 0.5 (lowest) and 3 (highest), with 1 being the default (it takes sometime for this value to effect)">
+              <td>Speed</td>
               <td>
                 <div>
                   <input min="0.1" max="2" step="0.1" type="range" data-id="rate"><span>1</span>
                 </div>
               </td>
             </tr>
-            <tr>
+            <tr title="A float representing the pitch value. It can range between 0 (lowest) and 2 (highest), with 1 being the default pitch for the current platform or voice.">
               <td>Pitch</td>
               <td>
                 <div>
