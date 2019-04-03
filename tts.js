@@ -289,12 +289,94 @@
       }
     }
   }
-  class Intractive extends Navigate {
+  class Options extends Navigate {
+    constructor() {
+      super();
+      this.options = {
+        get pitch() {
+          return Number(localStorage.getItem('tts-pitch') || '1');
+        },
+        set pitch(val) {
+          localStorage.setItem('tts-pitch', val);
+        },
+        get volume() {
+          return Number(localStorage.getItem('tts-volume') || '1');
+        },
+        set volume(val) {
+          localStorage.setItem('tts-volume', val);
+        },
+        get rate() {
+          return Number(localStorage.getItem('tts-rate') || '1');
+        },
+        set rate(val) {
+          localStorage.setItem('tts-rate', val);
+        }
+      };
+    }
+    create() {
+      super.create();
+      this.instance.pitch = this.options.pitch;
+      this.instance.rate = this.options.rate;
+      this.instance.lang = this.options.lang;
+      this.instance.volume = this.options.volume;
+    }
+  }
+  class Intractive extends Options {
     [BIULD](parent) {
       parent.classList.add('tts');
 
-      const label = document.createElement('label');
-      const select = document.createElement('select');
+      const dom = (new DOMParser()).parseFromString(`
+        <div data-id="controls">
+          <label data-id="lang">
+            <select></select>
+          </label>
+          <input type="button" disabled="true" class="previous">
+          <input type="button" disabled="true" class="play">
+          <input type="button" disabled="true" class="next">
+          <input type="button" disabled="true" class="stop">
+        </div>
+        <table width="100%">
+          <colgroup>
+            <col width=60px>
+            <col>
+          </colgroup>
+          <tbody>
+            <tr>
+              <td>Volume</td>
+              <td>
+                <div>
+                  <input min="0.1" max="1" step="0.1" type="range" data-id="volume"><span>1</span>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>Rate</td>
+              <td>
+                <div>
+                  <input min="0.1" max="2" step="0.1" type="range" data-id="rate"><span>1</span>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>Pitch</td>
+              <td>
+                <div>
+                  <input min="0.1" max="2" step="0.1" type="range" data-id="pitch"><span>1</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      `, 'text/html');
+
+      const div = dom.querySelector('div');
+      parent.appendChild(div);
+      const table = dom.querySelector('table');
+      parent.appendChild(table);
+
+      // voice
+      const select = div.querySelector('select');
+      const label = div.querySelector('label');
       select.addEventListener('change', () => {
         const parts = select.value.split('/');
         [label.dataset.value, label.title] = parts;
@@ -306,20 +388,10 @@
           }
         }
       });
-      label.appendChild(select);
-      parent.appendChild(label);
-
-      const stop = document.createElement('input');
-      stop.type = 'button';
-      stop.disabled = true;
-      const previous = stop.cloneNode();
-      const play = stop.cloneNode();
-      const next = stop.cloneNode();
-      previous.classList.add('previous');
+      // controls
+      const previous = div.querySelector('.previous');
       previous.addEventListener('click', () => this.navigate('backward'));
-      parent.appendChild(previous);
-      play.classList.add('play');
-
+      const play = div.querySelector('.play');
       play.addEventListener('click', () => {
         if (speechSynthesis.speaking === false) {
           this.create();
@@ -332,13 +404,10 @@
           this.pause();
         }
       });
-      parent.appendChild(play);
-      next.classList.add('next');
+      const next = div.querySelector('.next');
       next.addEventListener('click', () => this.navigate('forward'));
-      parent.appendChild(next);
-      stop.classList.add('stop');
+      const stop = div.querySelector('.stop');
       stop.addEventListener('click', () => this.stop());
-      parent.appendChild(stop);
 
       this.ready().then(() => {
         play.disabled = false;
@@ -403,6 +472,45 @@
           calc();
         }
       });
+      // volume
+      {
+        const input = table.querySelector('[data-id=volume]');
+        const span = input.nextElementSibling;
+        span.textContent = input.value = this.options.volume;
+        input.addEventListener('input', () => {
+          this.options.volume = input.value;
+          span.textContent = input.value;
+          if (this.instance) {
+            this.instance.volume = input.value;
+          }
+        });
+      }
+      // pitch
+      {
+        const input = table.querySelector('[data-id=pitch]');
+        const span = input.nextElementSibling;
+        span.textContent = input.value = this.options.pitch;
+        input.addEventListener('input', () => {
+          this.options.pitch = input.value;
+          span.textContent = input.value;
+          if (this.instance) {
+            this.instance.pitch = input.value;
+          }
+        });
+      }
+      // rate
+      {
+        const input = table.querySelector('[data-id=rate]');
+        const span = input.nextElementSibling;
+        span.textContent = input.value = this.options.rate;
+        input.addEventListener('input', () => {
+          this.options.rate = input.value;
+          span.textContent = input.value;
+          if (this.instance) {
+            this.instance.rate = input.value;
+          }
+        });
+      }
 
       this.buttons = {
         select,
