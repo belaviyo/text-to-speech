@@ -25,7 +25,7 @@
   class SimpleTTS extends Emitter {
     constructor(doc = document, options = {
       separator: '\n!\n',
-      delay: 1000,
+      delay: 300,
       maxlength: 160
     }) {
       super();
@@ -78,7 +78,6 @@
     }
     [LAZY](callback, timeout = this.DELAY) {
       window.clearTimeout(this.timer);
-      console.log(timeout);
       this.timer = window.setTimeout(callback, timeout);
     }
     ready() {
