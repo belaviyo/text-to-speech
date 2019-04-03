@@ -24,19 +24,19 @@
   opacity: 0.3;
   cursor: default;
 }
-.tts [data-cmd=play] {
+.tts .play {
   background-image: url('icons/play.svg');
 }
-.tts [data-cmd=pause] {
+.tts .pause {
   background-image: url('icons/pause.svg');
 }
-.tts [data-cmd=previous] {
+.tts .previous {
   background-image: url('icons/previous.svg');
 }
-.tts [data-cmd=next] {
+.tts .next {
   background-image: url('icons/next.svg');
 }
-.tts [data-cmd=stop] {
+.tts .stop {
   background-image: url('icons/stop.svg');
 }
 .tts select {
