@@ -1,3 +1,4 @@
+/* globals tokenizer */
 'use strict';
 
 {
@@ -266,7 +267,13 @@
           this.sections.push(section);
         }
         else {
-          const parts = section.textContent.split(/[.,]/g).filter(a => a);
+          const parts = [];
+          if (typeof tokenizer === 'object') {
+            parts.push(...tokenizer.sentences(section.textContent, {}));
+          }
+          else {
+            parts.push(...section.textContent.split(/[.,]/g).filter(a => a));
+          }
           const combined = [];
           let length = 0;
           let cache = [];
